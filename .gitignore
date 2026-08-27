@@ -1,0 +1,20 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Compiled Python files
+*.pyo
+
+# Environment variables
+.env
+
+# IDE/editor files
+.vscode/
+.idea/
+
+multimodal-physiological-monitoring-during-virtual-reality-piloting-tasks-1.0.0/

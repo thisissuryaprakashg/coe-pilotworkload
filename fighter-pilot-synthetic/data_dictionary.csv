@@ -1,0 +1,51 @@
+column,description,dtype,provenance
+pilot_id,Unique synthetic pilot identifier,id,SYNTHETIC_ASSUMPTION
+mission_id,Unique mission identifier,id,SYNTHETIC_ASSUMPTION
+segment_id,Unique mission-phase-window identifier (time segment),id,SYNTHETIC_ASSUMPTION
+experience_group,Pilot experience tier: novice/intermediate/experienced,categorical,METHODOLOGICAL_INFERENCE
+years_experience,Simulated years of flight experience,float,SYNTHETIC_ASSUMPTION
+mission_type,"Air-to-air (ATA) or air-to-ground (ATG) mission, per Chen et al. (2025)",categorical,SOURCE_GROUNDED
+difficulty_tier,"Chen-style task difficulty: low/medium/high (3/1, 6/2, 9/3 target/engagement tiers)",categorical,SOURCE_GROUNDED
+difficulty_rank,Numeric encoding of difficulty_tier (1/2/3),int,METHODOLOGICAL_INFERENCE
+target_count,"Number of targets in mission, Chen-style difficulty manipulation",int,SOURCE_GROUNDED
+required_engagements,"Number of required engagements, Chen-style difficulty manipulation",int,SOURCE_GROUNDED
+visibility,"Normal or low visibility condition, per Mohanavelu et al. (2022)",categorical,SOURCE_GROUNDED
+secondary_cognitive_task,"Secondary cognitive task present (1) or absent (0), per Mohanavelu et al. (2022)",binary,SOURCE_GROUNDED
+threat_density,"Number of simultaneous threats, Svensson-inspired tactical complexity",int,METHODOLOGICAL_INFERENCE
+friendly_aircraft_count,"Number of friendly aircraft to track, Svensson-inspired",int,METHODOLOGICAL_INFERENCE
+information_update_rate_per_min,"Tactical display information update rate, Svensson-inspired",float,METHODOLOGICAL_INFERENCE
+display_complexity,"1-5 ordinal tactical display complexity score, Svensson-inspired",int,METHODOLOGICAL_INFERENCE
+flight_phase,"Time-ordered flight phase, per Mohanavelu et al. (2022) phase structure / Chen attack-task period",categorical,SOURCE_GROUNDED
+window_duration_s,Duration of this time segment in seconds,float,SYNTHETIC_ASSUMPTION
+D_task_z,Standardized task/target demand component,float,METHODOLOGICAL_INFERENCE
+D_perceptual_z,Standardized perceptual demand component (visibility-driven),float,METHODOLOGICAL_INFERENCE
+D_cognitive_z,Standardized cognitive demand component (secondary-task-driven),float,METHODOLOGICAL_INFERENCE
+D_tactical_z,Standardized tactical/information-complexity demand component,float,METHODOLOGICAL_INFERENCE
+D_temporal_z,Standardized time-pressure demand component,float,METHODOLOGICAL_INFERENCE
+latent_workload,Generative ground-truth latent mental workload score (weighted sum of demand components + pilot effect + noise),float,METHODOLOGICAL_INFERENCE
+engagement_time_s,Time to engage target(s) in this segment,float,METHODOLOGICAL_INFERENCE
+hit_rate,Proportion of targets successfully hit,float,SOURCE_GROUNDED (direction/relationship); values SYNTHETIC_ASSUMPTION
+target_disengagement_time_s,Time to disengage from target after task,float,METHODOLOGICAL_INFERENCE
+altitude_error_ft,Deviation from commanded altitude,float,METHODOLOGICAL_INFERENCE
+tracking_error_deg,Angular tracking error,float,METHODOLOGICAL_INFERENCE
+navigation_error_nm,Navigation deviation in nautical miles,float,METHODOLOGICAL_INFERENCE
+mission_completion,Binary mission-segment completion success (1/0),binary,METHODOLOGICAL_INFERENCE
+HR_bpm,"Heart rate (beats/min); relationship to workload SOURCE_GROUNDED, absolute values SYNTHETIC_ASSUMPTION",float,SOURCE_GROUNDED (direction)
+SDNN_ms,SDNN heart-rate-variability feature (ms),float,SOURCE_GROUNDED (direction)
+RMSSD_ms,RMSSD heart-rate-variability feature (ms),float,SOURCE_GROUNDED (direction)
+LF_HF_ratio,LF/HF ratio (sympathovagal balance),float,SOURCE_GROUNDED (direction)
+EEG_theta_rel_power,Relative theta band power (frontal-midline-theta-like workload indicator),float,SOURCE_GROUNDED (direction)
+EEG_alpha_rel_power,Relative alpha band power,float,SOURCE_GROUNDED (direction)
+EEG_delta_rel_power,Relative delta band power,float,METHODOLOGICAL_INFERENCE
+fixation_rate_per_min,Visual fixation rate,float,METHODOLOGICAL_INFERENCE
+fixation_duration_ms,Mean visual fixation duration (ms),float,SOURCE_GROUNDED (direction)
+blink_rate_bpm,Eye blink rate (blinks/min),float,METHODOLOGICAL_INFERENCE
+pupil_diameter_mm,"Pupil diameter (mm), workload-related dilation",float,METHODOLOGICAL_INFERENCE
+nasa_tlx_subjective_proxy,Synthetic proxy for subjective workload rating (0-100). NOT a simulated measured NASA-TLX score.,float,SYNTHETIC_ASSUMPTION
+workload_source,Provenance tag: how the workload label was derived,categorical,METHODOLOGICAL_INFERENCE
+generator_version,Dataset generator version string,meta,SYNTHETIC_ASSUMPTION
+parameter_seed,Random seed used for reproducibility,meta,SYNTHETIC_ASSUMPTION
+workload_class_3lvl,Tertile-binned workload class: low/medium/high,categorical,METHODOLOGICAL_INFERENCE
+perceptual_cognitive_condition,Mohanavelu-style 4-level condition: NV_NoTask/LV_NoTask/NV_CogTask/LV_CogTask,categorical,SOURCE_GROUNDED
+confidence,Heuristic generation-confidence score per row (not a statistical CI),float,SYNTHETIC_ASSUMPTION
+validation_flag,Whether the row passed basic range/consistency checks,binary,SYNTHETIC_ASSUMPTION

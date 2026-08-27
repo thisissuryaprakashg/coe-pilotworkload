@@ -1,0 +1,70 @@
+================================================================================
+SECTION 8.1: MATHEMATICAL MODEL RESULTS SUMMARY
+================================================================================
+
+Selected Model : Ordinal Logistic Regression (Proportional Odds Model)
+Proportional Odds LRT: chi2 = 57.879,  p = 0.1554
+
+Feature Selection (post VIF pruning):
+  Candidate features entered : 37
+  Features retained (VIF<=10): 24
+  Pruned feature set:
+    - delta_HR
+    - delta_HRV_RMSSD
+    - delta_HRV_LF_HF
+    - delta_EDA_tonic
+    - delta_EMG_flexor
+    - delta_pupil_diam
+    - overall_gaze_entropy_LY
+    - gaze_entropy_y
+    - pupil_diam_kurt
+    - psd_max_RY
+    - pupil_diam_skew_R
+    - pupil_diam_kurt_L
+    - fix_density_kurt
+    - psd_max_LZ
+    - pupil_diam_stdev_R
+    - pupil_diam_std_mm
+    - pupil_diam_skew
+    - fix_dur_stdev
+    - fix_dur_kurt
+    - emg_extensor_rms_mV
+    - fix_density_stdev
+    - eyes_closed_fraction_R
+    - emg_flexor_rms_mV
+    - eyes_closed_fraction_L
+
+Equation Interpretation (top significant predictors, p < 0.05):
+  pupil_diam_skew                    : beta=+0.4871, OR=1.628 [1.285, 2.061], p=0.0001 ***
+    -> For a 1-SD increase in pupil diam skew, the odds of transitioning to a higher workload level increases by 62.8%.
+  gaze_entropy_y                     : beta=-0.5410, OR=0.582 [0.448, 0.757], p=0.0001 ***
+    -> For a 1-SD increase in gaze entropy y, the odds of transitioning to a higher workload level decreases by 41.8%.
+  emg_flexor_rms_mV                  : beta=+0.7377, OR=2.091 [1.348, 3.245], p=0.0010 ***
+    -> For a 1-SD increase in emg flexor rms mV, the odds of transitioning to a higher workload level increases by 109.1%.
+  pupil_diam_kurt                    : beta=+0.3249, OR=1.384 [1.112, 1.723], p=0.0036 **
+    -> For a 1-SD increase in pupil diam kurt, the odds of transitioning to a higher workload level increases by 38.4%.
+  delta_HR                           : beta=+0.3188, OR=1.375 [1.095, 1.728], p=0.0061 **
+    -> For a 1-SD increase in delta HR, the odds of transitioning to a higher workload level increases by 37.5%.
+  overall_gaze_entropy_LY            : beta=+0.4975, OR=1.645 [1.078, 2.509], p=0.0209 *
+    -> For a 1-SD increase in overall gaze entropy LY, the odds of transitioning to a higher workload level increases by 64.5%.
+  delta_HRV_RMSSD                    : beta=+0.2498, OR=1.284 [1.026, 1.606], p=0.0286 *
+    -> For a 1-SD increase in delta HRV RMSSD, the odds of transitioning to a higher workload level increases by 28.4%.
+  delta_EMG_flexor                   : beta=-0.4372, OR=0.646 [0.424, 0.984], p=0.0418 *
+    -> For a 1-SD increase in delta EMG flexor, the odds of transitioning to a higher workload level decreases by 35.4%.
+  pupil_diam_skew_R                  : beta=-0.4771, OR=0.621 [0.387, 0.994], p=0.0472 *
+    -> For a 1-SD increase in pupil diam skew R, the odds of transitioning to a higher workload level decreases by 37.9%.
+
+LOSO Cross-Validation Results (Approach A: Delta personalised features):
+  Mean Accuracy   : 34.06%  +/- 15.15%
+  Mean Macro-F1   : 0.276  +/- 0.171
+  Mean Kappa      : 0.122  +/- 0.202
+  Extreme Acc(1v4): 47.21%  +/- 16.42%
+
+LOSO Cross-Validation Results (Approach B: Raw features + Subject Fixed Effects):
+  Mean Accuracy   : 38.90%  +/- 14.11%
+  Mean Macro-F1   : 0.288  +/- 0.153
+  Mean Kappa      : 0.185  +/- 0.188
+
+  Personalization Gain (Delta vs Raw): -4.84% accuracy
+
+================================================================================
