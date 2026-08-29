@@ -12,13 +12,15 @@ Implements Section 7 of cogpilot_project_spec.md:
 """
 
 import json
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy import stats
 
-MASTER_CSV = r'c:\coe\master_feature_matrix.csv'
-REPORT_CSV = r'c:\coe\feature_screening_report.csv'
-SELECTED_JSON = r'c:\coe\selected_features.json'
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+MASTER_CSV = PROJECT_ROOT / 'data' / 'processed' / 'master_feature_matrix.csv'
+REPORT_CSV = PROJECT_ROOT / 'reports' / 'feature_screening_report.csv'
+SELECTED_JSON = PROJECT_ROOT / 'reports' / 'selected_features.json'
 
 # Non-feature metadata and identifier columns to exclude from statistical screening
 EXCLUDE_COLS = {

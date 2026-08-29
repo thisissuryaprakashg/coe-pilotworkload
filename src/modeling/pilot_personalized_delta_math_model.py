@@ -24,6 +24,7 @@ Architecture:
 
 import os
 import json
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -32,9 +33,10 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score, roc_auc_score
 
-MASTER_CSV = r'c:\coe\master_feature_matrix.csv'
-OUT_PERSONALIZED_CSV = r'c:\coe\personalized_delta_model_results.csv'
-OUT_EQUATION_CSV = r'c:\coe\personalized_math_equation_weights.csv'
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+MASTER_CSV = PROJECT_ROOT / 'data' / 'processed' / 'master_feature_matrix.csv'
+OUT_PERSONALIZED_CSV = PROJECT_ROOT / 'reports' / 'personalized_delta_model_results.csv'
+OUT_EQUATION_CSV = PROJECT_ROOT / 'reports' / 'personalized_math_equation_weights.csv'
 
 def engineer_personalized_features(df):
     """

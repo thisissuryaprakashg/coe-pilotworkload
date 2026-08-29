@@ -416,3 +416,53 @@ Evaluated on: 34 clean pilot folds (sub-cp003 excluded from eye models)
 25  | enhanced_aggregated_benchmark_results.csv | Enhanced denoised aggregated multi-metric benchmark table
 26  | workdone.txt                              | This master project progress report
 ====================================================================================================
+
+
+====================================================================================================
+10. REORGANIZED FOLDER STRUCTURE (August 29, 2026)
+====================================================================================================
+The existing files were organized into folders by responsibility. No project files were deleted.
+
+coe-pilotworkload/
+|-- data/
+|   |-- README.md                         <- data folder guide
+|   |-- raw/                              <- local raw CogPilot dataset location (not committed)
+|   |-- processed/
+|       |-- README.md                     <- processed-data guide
+|       |-- cleaned_multimodal_dataset.csv
+|       |-- master_feature_matrix.csv
+|-- docs/
+|   |-- README.md                         <- documentation folder guide
+|   |-- cogpilot_project_spec.md
+|   |-- dataset_structure.txt
+|   |-- workdone.txt
+|-- reports/
+|   |-- README.md                         <- reports folder guide
+|   |-- feature-screening, model, VIF, coefficient, and benchmark outputs
+|-- src/
+|   |-- README.md                         <- source-code guide
+|   |-- data_pipeline/
+|   |   |-- README.md                     <- pipeline guide and run order
+|   |   |-- cleaning_rules.py
+|   |   |-- clean_ecg.py
+|   |   |-- clean_eda_emg.py
+|   |   |-- clean_eyetracking.py
+|   |   |-- build_cleaned_dataset.py
+|   |   |-- assemble_master_table.py
+|   |-- modeling/
+|       |-- README.md                     <- modeling guide and run order
+|       |-- feature_screening.py
+|       |-- math_model_ordinal_regression.py
+|       |-- train_and_compare_models.py
+|       |-- advanced_workload_modeling.py
+|       |-- pilot_personalized_delta_math_model.py
+|-- fighter-pilot-synthetic/
+    |-- README.md                         <- synthetic dataset guide
+    |-- generate_dataset.py
+    |-- synthetic dataset outputs and validation files
+
+Path updates:
+  - Pipeline and modeling scripts now resolve project files relative to the repository.
+  - Generated tables are saved under data/processed/ and reports/.
+  - Raw dataset location is configurable with COGPILOT_DATASET_ROOT.
+  - The synthetic generator writes outputs beside its own script.

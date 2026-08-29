@@ -14,6 +14,7 @@ Master data cleaning and feature assembly pipeline:
 import os
 import re
 import glob
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from cleaning_rules import BAD_RUNS_EXCLUSIONS, is_run_excluded, is_eye_excluded
@@ -21,7 +22,12 @@ from clean_ecg import clean_and_extract_ecg_features
 from clean_eda_emg import clean_and_extract_eda_features, clean_and_extract_emg_features
 from clean_eyetracking import clean_and_extract_eye_features
 
-DATASET_ROOT = r'c:\coe\multimodal-physiological-monitoring-during-virtual-reality-piloting-tasks-1.0.0\dataPackage'
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATASET_ROOT = Path(os.environ.get(
+    'COGPILOT_DATASET_ROOT',
+    PROJECT_ROOT / 'data' / 'raw' / 'cogpilot'
+)) / 'dataPackage'
+OUTPUT_CSV = PROJECT_ROOT / 'data' / 'processed' / 'cleaned_multimodal_dataset.csv'
 
 def load_perf_metrics() -> pd.DataFrame:
     perf_path = os.path.join(DATASET_ROOT, 'task-ils', 'PerfMetrics.csv')
@@ -168,9 +174,9 @@ def main():
     print(f"Runs with Eye-Tracking included: {eye_valid_count} (Sub-cp003 and 2 sub-cp027 runs excluded as specified)")
     
     # Save output dataset
-    out_csv = r'c:\coe\cleaned_multimodal_dataset.csv'
-    df_clean.to_csv(out_csv, index=False)
-    print(f"\nSuccessfully generated cleaned dataset: {out_csv}")
+    OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+    df_clean.to_csv(OUTPUT_CSV, index=False)
+    print(f"\nSuccessfully generated cleaned dataset: {OUTPUT_CSV}")
     print(f"Dataset shape: {df_clean.shape[0]} rows x {df_clean.shape[1]} columns")
 
 if __name__ == '__main__':

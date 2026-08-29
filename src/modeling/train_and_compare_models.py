@@ -25,6 +25,7 @@ Implements Section 8 of cogpilot_project_spec.md:
 
 import os
 import json
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -36,10 +37,11 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score, confusion_matrix
 
-MASTER_CSV = r'c:\coe\master_feature_matrix.csv'
-SELECTED_JSON = r'c:\coe\selected_features.json'
-OUT_RESULTS_CSV = r'c:\coe\model_comparison_results.csv'
-OUT_MATH_COEFS_CSV = r'c:\coe\math_model_coefficients.csv'
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+MASTER_CSV = PROJECT_ROOT / 'data' / 'processed' / 'master_feature_matrix.csv'
+SELECTED_JSON = PROJECT_ROOT / 'reports' / 'selected_features.json'
+OUT_RESULTS_CSV = PROJECT_ROOT / 'reports' / 'model_comparison_results.csv'
+OUT_MATH_COEFS_CSV = PROJECT_ROOT / 'reports' / 'math_model_coefficients.csv'
 
 def get_feature_subsets(df, selected_dict):
     """Defines feature subsets for model training and ablation studies."""

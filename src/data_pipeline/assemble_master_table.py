@@ -15,15 +15,21 @@ Implements Sections 4.1, 5.3, and 6 of cogpilot_project_spec.md:
 
 import os
 import glob
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from clean_ecg import clean_and_extract_ecg_features
 from clean_eda_emg import clean_and_extract_eda_features, clean_and_extract_emg_features
 
-DATASET_ROOT = r'c:\coe\multimodal-physiological-monitoring-during-virtual-reality-piloting-tasks-1.0.0'
-REST_DIR = os.path.join(DATASET_ROOT, 'dataPackage', 'task-rest')
-OFFICIAL_EYE_CSV = os.path.join(DATASET_ROOT, 'starterCode', 'data_feats', 'devSubjsFeatMat.csv')
-CLEANED_ILS_CSV = r'c:\coe\cleaned_multimodal_dataset.csv'
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATASET_ROOT = Path(os.environ.get(
+    'COGPILOT_DATASET_ROOT',
+    PROJECT_ROOT / 'data' / 'raw' / 'cogpilot'
+))
+REST_DIR = DATASET_ROOT / 'dataPackage' / 'task-rest'
+OFFICIAL_EYE_CSV = DATASET_ROOT / 'starterCode' / 'data_feats' / 'devSubjsFeatMat.csv'
+CLEANED_ILS_CSV = PROJECT_ROOT / 'data' / 'processed' / 'cleaned_multimodal_dataset.csv'
+OUTPUT_MASTER_CSV = PROJECT_ROOT / 'data' / 'processed' / 'master_feature_matrix.csv'
 
 def extract_rest_baselines() -> pd.DataFrame:
     """Extracts resting baseline features from level-000_run-001 for all subjects."""
@@ -149,10 +155,10 @@ def main():
         print(f"Warning: {OFFICIAL_EYE_CSV} not found.")
 
     # 5. Export master feature matrix
-    out_master_csv = r'c:\coe\master_feature_matrix.csv'
-    df_merged.to_csv(out_master_csv, index=False)
+    OUTPUT_MASTER_CSV.parent.mkdir(parents=True, exist_ok=True)
+    df_merged.to_csv(OUTPUT_MASTER_CSV, index=False)
     print("------------------------------------------------------------------")
-    print(f"SUCCESS: Generated Master Feature Matrix -> {out_master_csv}")
+    print(f"SUCCESS: Generated Master Feature Matrix -> {OUTPUT_MASTER_CSV}")
     print(f"Master Matrix Dimensions: {df_merged.shape[0]} rows x {df_merged.shape[1]} columns")
     print("------------------------------------------------------------------")
 

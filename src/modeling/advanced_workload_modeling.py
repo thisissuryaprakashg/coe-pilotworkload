@@ -19,6 +19,7 @@ Enhanced Workload Modeling Suite implementing:
 
 import os
 import json
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -30,9 +31,10 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score, roc_auc_score
 
-MASTER_CSV = r'c:\coe\master_feature_matrix.csv'
-OUT_RESULTS_CSV = r'c:\coe\enhanced_model_benchmark_results.csv'
-OUT_AGG_RESULTS_CSV = r'c:\coe\enhanced_aggregated_benchmark_results.csv'
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+MASTER_CSV = PROJECT_ROOT / 'data' / 'processed' / 'master_feature_matrix.csv'
+OUT_RESULTS_CSV = PROJECT_ROOT / 'reports' / 'enhanced_model_benchmark_results.csv'
+OUT_AGG_RESULTS_CSV = PROJECT_ROOT / 'reports' / 'enhanced_aggregated_benchmark_results.csv'
 
 def fuse_bilateral_eye_features(df):
     """

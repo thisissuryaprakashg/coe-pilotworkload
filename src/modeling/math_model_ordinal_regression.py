@@ -29,6 +29,7 @@ Outputs:
 import os
 import json
 import warnings
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -48,12 +49,13 @@ warnings.filterwarnings('ignore')
 # ─────────────────────────────────────────────────────────────────────────────
 # Paths
 # ─────────────────────────────────────────────────────────────────────────────
-MASTER_CSV    = r'c:\coe\master_feature_matrix.csv'
-SELECTED_JSON = r'c:\coe\selected_features.json'
-OUT_VIF       = r'c:\coe\math_model_vif_report.csv'
-OUT_COEFS     = r'c:\coe\math_model_equation_coefficients.csv'
-OUT_LOSO      = r'c:\coe\math_model_loso_results.csv'
-OUT_SUMMARY   = r'c:\coe\math_model_summary.txt'
+PROJECT_ROOT  = Path(__file__).resolve().parents[2]
+MASTER_CSV    = PROJECT_ROOT / 'data' / 'processed' / 'master_feature_matrix.csv'
+SELECTED_JSON = PROJECT_ROOT / 'reports' / 'selected_features.json'
+OUT_VIF       = PROJECT_ROOT / 'reports' / 'math_model_vif_report.csv'
+OUT_COEFS     = PROJECT_ROOT / 'reports' / 'math_model_equation_coefficients.csv'
+OUT_LOSO      = PROJECT_ROOT / 'reports' / 'math_model_loso_results.csv'
+OUT_SUMMARY   = PROJECT_ROOT / 'reports' / 'math_model_summary.txt'
 
 VIF_THRESHOLD = 10.0   # Drop features with VIF > 10
 

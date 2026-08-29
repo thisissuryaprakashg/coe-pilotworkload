@@ -19,6 +19,7 @@ Author: generated per user's request for a research-paper-grade synthetic datase
 """
 
 import numpy as np
+from pathlib import Path
 import pandas as pd
 
 # ----------------------------------------------------------------------------
@@ -392,7 +393,8 @@ print("Full windowed dataset shape:", df.shape)
 # ----------------------------------------------------------------------------
 # 6. Save Version 2 (windowed) dataset
 # ----------------------------------------------------------------------------
-out_path = "/home/claude/synth/synthetic_fighter_pilot_workload_windowed.csv"
+OUTPUT_DIR = Path(__file__).resolve().parent
+out_path = OUTPUT_DIR / "synthetic_fighter_pilot_workload_windowed.csv"
 df.to_csv(out_path, index=False)
 print("Saved:", out_path)
 
@@ -436,7 +438,7 @@ mission_level["workload_class_3lvl"] = pd.cut(
 mission_level["generator_version"] = GENERATOR_VERSION
 mission_level["parameter_seed"] = SEED
 
-mission_out_path = "/home/claude/synth/synthetic_fighter_pilot_workload_mission_level.csv"
+mission_out_path = OUTPUT_DIR / "synthetic_fighter_pilot_workload_mission_level.csv"
 mission_level.to_csv(mission_out_path, index=False)
 print("Mission-level dataset shape:", mission_level.shape)
 print("Saved:", mission_out_path)
