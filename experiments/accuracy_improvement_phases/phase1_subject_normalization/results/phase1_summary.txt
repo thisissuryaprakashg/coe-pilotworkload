@@ -1,0 +1,79 @@
+================================================================================
+PHASE 1: SUBJECT-RELATIVE NORMALIZATION - RESULTS SUMMARY
+================================================================================
+
+TECHNIQUE: Within-subject z-score centering + cross-modal interactions
+MODELS: Same GBDT, RF, SVM, LR as baseline (no model changes)
+VALIDATION: LOSO (Leave-One-Subject-Out, no data leakage)
+
+RESULTS BY FEATURE SET & MODEL:
+--------------------------------------------------------------------------------
+  full_enhanced (raw + zscore + interactions) | ML_Model (GBDT)
+    Accuracy: 0.6344 ± 0.1693
+    Macro F1: 0.6195 | Kappa: 0.5123
+    Range: 0.1667 - 1.0000
+
+  full_enhanced (raw + zscore + interactions) | ML_Model (Random Forest)
+    Accuracy: 0.5966 ± 0.2236
+    Macro F1: 0.5729 | Kappa: 0.4617
+    Range: 0.0000 - 1.0000
+
+  full_enhanced (raw + zscore + interactions) | Math_Model (Logistic Regression)
+    Accuracy: 0.5711 ± 0.1936
+    Macro F1: 0.5477 | Kappa: 0.4271
+    Range: 0.2500 - 1.0000
+
+  full_enhanced (raw + zscore + interactions) | ML_Model (SVM RBF)
+    Accuracy: 0.5665 ± 0.1979
+    Macro F1: 0.5301 | Kappa: 0.4208
+    Range: 0.1667 - 1.0000
+
+  raw + zscore | ML_Model (GBDT)
+    Accuracy: 0.6282 ± 0.1534
+    Macro F1: 0.6136 | Kappa: 0.5043
+    Range: 0.1667 - 1.0000
+
+  raw + zscore | ML_Model (Random Forest)
+    Accuracy: 0.5985 ± 0.2215
+    Macro F1: 0.5778 | Kappa: 0.4643
+    Range: 0.1250 - 0.9167
+
+  raw + zscore | ML_Model (SVM RBF)
+    Accuracy: 0.5817 ± 0.2034
+    Macro F1: 0.5503 | Kappa: 0.4412
+    Range: 0.1667 - 1.0000
+
+  raw + zscore | Math_Model (Logistic Regression)
+    Accuracy: 0.5542 ± 0.2097
+    Macro F1: 0.5318 | Kappa: 0.4041
+    Range: 0.1667 - 0.9167
+
+  raw_only (baseline) | ML_Model (GBDT)
+    Accuracy: 0.4880 ± 0.1467
+    Macro F1: 0.4391 | Kappa: 0.3190
+    Range: 0.2500 - 0.8182
+
+  raw_only (baseline) | ML_Model (Random Forest)
+    Accuracy: 0.4744 ± 0.1650
+    Macro F1: 0.4098 | Kappa: 0.2997
+    Range: 0.1667 - 0.7500
+
+  raw_only (baseline) | ML_Model (SVM RBF)
+    Accuracy: 0.4280 ± 0.1901
+    Macro F1: 0.3621 | Kappa: 0.2414
+    Range: 0.0000 - 0.9167
+
+  raw_only (baseline) | Math_Model (Logistic Regression)
+    Accuracy: 0.3585 ± 0.1556
+    Macro F1: 0.2833 | Kappa: 0.1461
+    Range: 0.0833 - 0.7500
+
+--------------------------------------------------------------------------------
+
+BEST CONFIGURATION:
+  Model: ML_Model (GBDT)
+  Feature Set: full_enhanced (raw + zscore + interactions)
+  Accuracy: 0.6344
+
+  Baseline Best: 0.4880
+  Improvement: +0.1464 (+14.64%)
