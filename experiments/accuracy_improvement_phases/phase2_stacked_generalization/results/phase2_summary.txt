@@ -1,0 +1,14 @@
+================================================================================
+PHASE 2: CALIBRATED STACKED GENERALIZATION - RESULTS
+================================================================================
+
+TECHNIQUE: Meta-learning over 4 models × 2 feature sets = 8 base learners
+META-LEARNER: Logistic Regression on 32 stacking features
+
+Overall Accuracy: 0.5806 (58.06%) ± 0.1888
+Macro F1: 0.5546
+Cohen's Kappa: 0.4411
+Per-Subject Range: 0.0833 - 0.9167
+
+Baseline: 40.66%
+Improvement: +17.40%

@@ -1,0 +1,29 @@
+================================================================================
+PHASE 3: ORDINAL-AWARE POST-PROCESSING - RESULTS
+================================================================================
+
+TECHNIQUE: Ordinal Gaussian smoothing + cost-sensitive threshold tuning
+BASE MODELS: All 4 existing models (LR, RF, SVM, GBDT)
+FEATURES: Raw + Subject-Relative Enhanced (from Phase 1)
+
+Overall Accuracy: 0.5681 (56.81%) ± 0.1528
+Macro F1: 0.5222
+Cohen's Kappa: 0.4237
+Balanced Accuracy: 0.5690
+Per-Subject Range: 0.1667 - 0.8333
+
+Per-Class F1:
+  Level 1: 0.6147
+  Level 2: 0.3832
+  Level 3: 0.4596
+  Level 4: 0.7315
+
+Confusion Matrix:
+  Predicted →  L1    L2    L3    L4
+  True L1:  [71 14  6 10]
+  True L2:  [45 32 12 14]
+  True L3:  [11 17 37 36]
+  True L4:  [ 3  1  5 94]
+
+Baseline: 40.66%
+Improvement: +16.15%

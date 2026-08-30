@@ -1,0 +1,5 @@
+Phase,Accuracy,Macro_F1,Kappa,Improvement,Details
+Baseline,0.4066,0.405,0.21,0.0,
+Phase 1 (Subject Normalization),0.6344001236858379,0.6194727891156462,0.5122923201961921,0.22780012368583785,ML_Model (GBDT) on full_enhanced (raw + zscore + interactions)
+Phase 2 (Stacked Generalization),0.5806122448979592,0.5545918367346939,0.44110777421336433,0.17401224489795913,Meta-learner over 4 models × 2 feature sets
+Phase 3 (Ordinal Post-Processing),0.5680890538033395,0.5221624407338693,0.42369239594318414,0.1614890538033395,Ordinal smoothing + threshold tuning on all models
