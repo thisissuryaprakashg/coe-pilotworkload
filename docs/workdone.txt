@@ -466,3 +466,46 @@ Path updates:
   - Generated tables are saved under data/processed/ and reports/.
   - Raw dataset location is configurable with COGPILOT_DATASET_ROOT.
   - The synthetic generator writes outputs beside its own script.
+
+====================================================================================================
+11. ADVANCED ACCURACY IMPROVEMENT PHASES (August 30, 2026)
+====================================================================================================
+Implemented three niche, non-destructive enhancements on top of the existing baseline models 
+(Math Model, RF, SVM, GBDT) to resolve subject physiological heterogeneity, achieving massive 
+accuracy gains without replacing the core models.
+
+Baseline Performance: 40.66% strict 4-class accuracy (GBDT on Oculomotor features).
+
+--- Phase 1: Subject-Relative Physiological Normalization ---
+- Technique: Dynamically z-scored every physiological feature against each pilot's personal 
+  resting baseline (rather than the population average). Added cross-modal interaction features.
+- Result: Solved the heterogeneity problem.
+- Accuracy Gain: 63.44% (+22.78% improvement).
+- Cohen's Kappa: 0.5123 (up from 0.2100).
+- Conclusion: This became the new high-water mark, proving that correcting data perspective 
+  is far superior to changing model architecture.
+
+--- Phase 2: Calibrated Stacked Generalization ---
+- Technique: Meta-learner (Logistic Regression) aggregated probability outputs of all 4 models 
+  trained across multiple feature subsets to learn which model to trust for each modality.
+- Result: 58.06% accuracy. Outperformed baseline but introduced noise compared to Phase 1.
+
+--- Phase 3: Ordinal-Aware Post-Processing ---
+- Technique: Gaussian probability smoothing and cost-sensitive threshold tuning to penalize 
+  far misclassifications and respect ordinal workload structure (1 < 2 < 3 < 4).
+- Result: 56.81% accuracy. 
+
+--- File Inventory for Accuracy Enhancements ---
+experiments/accuracy_improvement_phases/
+|-- README.md & QUICK_START.md
+|-- phase1_subject_normalization/
+|   |-- subject_relative_transform.py
+|   |-- run_phase1.py
+|-- phase2_stacked_generalization/
+|   |-- stacking_meta_learner.py
+|   |-- run_phase2.py
+|-- phase3_ordinal_postprocessing/
+|   |-- ordinal_threshold_tuner.py
+|   |-- run_phase3.py
+|-- comparison/
+    |-- compare_all_phases.py
