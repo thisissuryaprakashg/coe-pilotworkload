@@ -1,0 +1,49 @@
+==========================================================================================
+100% FOLD-SAFE NESTED LOSO CROSS-VALIDATION BENCHMARK (ZERO DATA LEAKAGE)
+==========================================================================================
+
+GUARANTEES IMPLEMENTED:
+1. ZERO Flight Performance Outcomes Used (cumulative_total_error permanently dropped).
+2. ANOVA Screening & FDR Correction fit STRICTLY in-fold on training pilots.
+3. VIF Pruning fit STRICTLY in-fold on training pilots.
+4. Held-out test subjects personalized using ONLY pre-flight resting baselines.
+
+BENCHMARK RESULTS TABLE:
+------------------------------------------------------------------------------------------
+                                             strategy                                  model  strict_accuracy  adjacent_accuracy  binary_low_high_accuracy  extreme_1v4_accuracy  macro_f1  cohen_kappa  macro_roc_auc
+      Strategy 1: Population Scaler (Honest Baseline) Math_Model (Ordinal Proportional Odds)         0.358586           0.734848                  0.628788              0.656566  0.341568     0.144548       0.622566
+      Strategy 1: Population Scaler (Honest Baseline)      Math_Model (Multinomial Logistic)         0.406566           0.760101                  0.666667              0.666667  0.398262     0.209117       0.650195
+      Strategy 1: Population Scaler (Honest Baseline)               ML_Model (Random Forest)         0.386364           0.744949                  0.628788              0.681818  0.380337     0.182096       0.656028
+      Strategy 1: Population Scaler (Honest Baseline)                     ML_Model (SVM RBF)         0.373737           0.732323                  0.631313              0.641414  0.369749     0.165224       0.626930
+      Strategy 1: Population Scaler (Honest Baseline)                        ML_Model (GBDT)         0.373737           0.742424                  0.631313              0.661616  0.370710     0.165295       0.651558
+ Strategy 2: Fold-Safe Resting Baseline Normalization Math_Model (Ordinal Proportional Odds)         0.358586           0.734848                  0.628788              0.656566  0.341568     0.144548       0.622566
+ Strategy 2: Fold-Safe Resting Baseline Normalization      Math_Model (Multinomial Logistic)         0.406566           0.760101                  0.666667              0.666667  0.398262     0.209117       0.650221
+ Strategy 2: Fold-Safe Resting Baseline Normalization               ML_Model (Random Forest)         0.386364           0.744949                  0.628788              0.681818  0.380337     0.182096       0.656028
+ Strategy 2: Fold-Safe Resting Baseline Normalization                     ML_Model (SVM RBF)         0.373737           0.734848                  0.631313              0.641414  0.369902     0.165210       0.626759
+ Strategy 2: Fold-Safe Resting Baseline Normalization                        ML_Model (GBDT)         0.373737           0.742424                  0.631313              0.661616  0.370710     0.165295       0.651558
+Strategy 3: Fold-Safe Subject-Relative + Interactions Math_Model (Ordinal Proportional Odds)         0.345960           0.810606                  0.636364              0.676768  0.350682     0.127872       0.633581
+Strategy 3: Fold-Safe Subject-Relative + Interactions      Math_Model (Multinomial Logistic)         0.398990           0.767677                  0.654040              0.671717  0.397184     0.198776       0.655993
+Strategy 3: Fold-Safe Subject-Relative + Interactions               ML_Model (Random Forest)         0.348485           0.734848                  0.606061              0.616162  0.349133     0.131313       0.645206
+Strategy 3: Fold-Safe Subject-Relative + Interactions                     ML_Model (SVM RBF)         0.373737           0.770202                  0.638889              0.661616  0.374932     0.164855       0.649093
+Strategy 3: Fold-Safe Subject-Relative + Interactions                        ML_Model (GBDT)         0.368687           0.747475                  0.643939              0.631313  0.368559     0.158364       0.649386
+
+==========================================================================================
+FEATURE SELECTION STABILITY ACROSS FOLDS (TOP 15 MOST STABLE FEATURES):
+------------------------------------------------------------------------------------------
+                feature  selection_count  selection_frequency_pct  total_folds                                        strategy
+             psd_max_LY               34               100.000000           34 Strategy 1: Population Scaler (Honest Baseline)
+         gaze_entropy_y               34               100.000000           34 Strategy 1: Population Scaler (Honest Baseline)
+        pupil_diam_kurt               34               100.000000           34 Strategy 1: Population Scaler (Honest Baseline)
+     pupil_diam_stdev_R               34               100.000000           34 Strategy 1: Population Scaler (Honest Baseline)
+      pupil_diam_std_mm               34               100.000000           34 Strategy 1: Population Scaler (Honest Baseline)
+      pupil_diam_skew_R               34               100.000000           34 Strategy 1: Population Scaler (Honest Baseline)
+        pupil_diam_skew               34               100.000000           34 Strategy 1: Population Scaler (Honest Baseline)
+             psd_max_RZ               33                97.058824           34 Strategy 1: Population Scaler (Honest Baseline)
+overall_gaze_entropy_LY               32                94.117647           34 Strategy 1: Population Scaler (Honest Baseline)
+             psd_max_RY               32                94.117647           34 Strategy 1: Population Scaler (Honest Baseline)
+      fix_density_stdev               32                94.117647           34 Strategy 1: Population Scaler (Honest Baseline)
+      pupil_diam_kurt_L               31                91.176471           34 Strategy 1: Population Scaler (Honest Baseline)
+overall_gaze_entropy_LZ                3                 8.823529           34 Strategy 1: Population Scaler (Honest Baseline)
+overall_gaze_entropy_RY                2                 5.882353           34 Strategy 1: Population Scaler (Honest Baseline)
+       delta_EMG_flexor                2                 5.882353           34 Strategy 1: Population Scaler (Honest Baseline)
+==========================================================================================
