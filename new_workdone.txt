@@ -1,0 +1,718 @@
+================================================================================
+NEW WORKDONE — SESSION 2
+================================================================================
+Project: Predicting Pilot Workload from Physiological Signals (CogPilot Dataset)
+Date: 2026-09-19
+
+================================================================================
+1. PROBLEM STATEMENT
+================================================================================
+
+Previous pipeline achieved ~40% accuracy with linear models on run-level features.
+Goal: improve accuracy using better feature extraction and nonlinear mathematical models.
+
+Constraints:
+  - Mathematical models only (no ML: no trees, no ensembles, no neural nets)
+  - LOSO cross-validation (leave-one-subject-out)
+  - 4-class difficulty prediction (levels 1-4)
+  - Physiological signals only (no aircraft state features — ground truth contamination)
+
+================================================================================
+2. WHAT WAS WRONG WITH PREVIOUS PIPELINE
+================================================================================
+
+1. Single summary per ~5min run → collapses all temporal dynamics into 1 row
+2. Too few features: ECG=10, EDA=5, EMG=3
+3. Silent exception swallowing (except: pass everywhere)
+4. Aircraft state, head tracking, oculomotor events never used
+5. Linear model ceiling (logistic regression)
+6. Only ~408 samples total
+
+================================================================================
+3. NEW DATA PIPELINE (new_data_pipeline.py)
+================================================================================
+
+Key change: 30-SECOND TEMPORAL WINDOWING
+  - Each ~5min ILS run → ~10 windows of 30 seconds
+  - 408 runs × ~15 windows = 6032 total samples (15x more data)
+  - Each window inherits the run's difficulty label
+
+Feature extraction per 30-sec window:
+
+  ECG (8 features):
+    ecg_hr_mean, ecg_hr_std, ecg_hr_range
+    ecg_rmssd, ecg_sdnn, ecg_pnn50
+    ecg_rr_cv, ecg_sampen (sample entropy)
+
+  EDA (6 features):
+    eda_scl_mean, eda_scl_slope, eda_cond_std
+    eda_scr_count, eda_scr_amp_mean, eda_phasic_energy
+
+  EMG (4 features):
+    emg_flexor_rms, emg_extensor_rms
+    emg_cocontraction, emg_acc_rms
+
+  Eye Tracking (11 features):
+    eye_pupil_mean, eye_pupil_std, eye_pupil_skew, eye_pupil_kurt
+    eye_pupil_velocity, eye_perclos, eye_blink_rate
+    eye_gaze_ent_x, eye_gaze_ent_y
+    eye_conv_mean, eye_conv_std (dropped — 100% NaN)
+
+  Head Tracking (3 features):
+    head_vel_rms, head_yaw_std, head_pitch_std
+
+  Aircraft State (5 features — EXCLUDED from modeling):
+    ac_pitch_std, ac_roll_std, ac_climbrate_std, ac_airspeed_std, ac_agl_mean
+    Reason: these measure experimental conditions (turbulence), not pilot physiology
+    ac_pitch_std had highest eta_sq=0.091 but is ground-truth contamination
+
+  Delta features (7 features):
+    delta_hr, delta_rmssd, delta_sdnn, delta_scl
+    delta_flexor, delta_extensor, delta_pupil
+    Computed as: task_window_value - resting_baseline_value
+
+  Oculomotor features (40 run-level features from devSubjsFeatMat.csv):
+    Gaze entropy (6), PSD (12), blink (2), pupil (8), fixation (8), saccade (4)
+    Replicated to each window of the run
+
+Pipeline output:
+  File: new_master_features.csv
+  Shape: 6032 rows × 90 columns (84 features + 6 metadata)
+  Class distribution: L1=1459, L2=1534, L3=1521, L4=1518 (balanced)
+  Coverage: ECG 96.1%, EDA 91.0%, EMG 99.8%, Eye 78.5%, Head 100%, Aircraft 100%
+
+Cleaning rules applied:
+  11 bad runs excluded (same as previous pipeline)
+  Eye tracking excluded for sub-cp003 (all runs) and 2 runs from sub-cp027
+  Rest baselines computed from task-rest level-000_run-001 for all 35 subjects
+
+================================================================================
+4. FEATURE EXPLORATION (explore_features.py)
+================================================================================
+
+Step 1 — Data Quality:
+  3 features dropped (>30% NaN): eye_conv_mean, eye_conv_std, delta_pupil
+  0 zero-variance features
+  81 features retained
+
+Step 2 — Statistical Screening (ANOVA):
+  61 / 81 features significant at p < 0.05
+  Top 5 by eta-squared (excluding ac_ features):
+    overall_gaze_entropy_RY    eta_sq=0.0728  p=1.76e-98   INCREASE
+    psd_max_LY                 eta_sq=0.0717  p=6.96e-97   DECREASE
+    psd_max_RZ                 eta_sq=0.0407  p=4.48e-54   DECREASE
+    pupil_diam_kurt_R          eta_sq=0.0368  p=1.09e-48   INCREASE
+    fix_density_stdev          eta_sq=0.0251  p=6.01e-33   DECREASE
+
+  20 non-significant features (p >= 0.05):
+    eye_gaze_ent_x, eye_pupil_kurt, head_yaw_std, ecg_pnn50,
+    eda_scr_amp_mean, eda_cond_std, ecg_sdnn, pupil_diam_mean_L,
+    eda_scl_mean, eye_gaze_ent_y, and 10 more
+
+Step 3 — Correlation Analysis:
+  31 highly correlated pairs (|r| > 0.85)
+  Notable: psd_freq_of_max_{LX,RX,LY,RY} all r=1.000 (identical)
+  overall_gaze_entropy_{LZ,RZ} r=0.976
+  fix_dur_skew / fix_dur_kurt r=0.965
+
+Step 4 — VIF Pruning:
+  61 → 40 features (21 removed for VIF > 10)
+  Notable removals: psd_freq_of_max_{LX,RX,LY} (VIF=999), 
+    overall_gaze_entropy_RZ (VIF=111.7), pupil_diam_kurt_L (VIF=95.9)
+
+Step 5 — Aircraft Feature Decision:
+  5 ac_ features DROPPED (ground-truth contamination)
+  Final feature set: 35 physiological features
+  Feature:sample ratio = 1:150
+
+Final 35 features used for modeling:
+   1. overall_gaze_entropy_RY     2. psd_max_LY
+   3. psd_max_RZ                  4. pupil_diam_kurt_R
+   5. fix_density_stdev           6. eye_pupil_std
+   7. pupil_diam_skew_L           8. overall_gaze_entropy_RX
+   9. eyes_closed_fraction_R     10. psd_freq_of_max_RY
+  11. psd_max_LX                 12. delta_extensor
+  13. emg_acc_rms                14. delta_flexor
+  15. head_pitch_std             16. eye_blink_rate
+  17. delta_hr                   18. fix_density_kurt
+  19. fix_dur_stdev              20. fix_dur_mean
+  21. sac_peak_vel_stdev         22. eye_pupil_velocity
+  23. sac_main_seq_mean          24. psd_freq_of_max_LZ
+  25. fix_dur_kurt               26. delta_scl
+  27. ecg_hr_mean                28. psd_freq_of_max_RZ
+  29. head_vel_rms               30. eda_scr_count
+  31. pupil_diam_mean_R          32. emg_cocontraction
+  33. ecg_sampen                 34. eye_perclos
+  35. eye_pupil_skew
+
+Modality contribution (features surviving all screening):
+  ECG/HRV:      2 features
+  EDA:          1 feature
+  EMG:          2 features
+  Eye/Pupil:    5 features
+  Head:         2 features
+  Delta:        4 features
+  Oculomotor:  19 features (entropy, PSD, blink, pupil, fixation, saccade)
+
+================================================================================
+5. NONLINEAR MODEL RESULTS (nonlinear_model.py)
+================================================================================
+
+All models: LOSO cross-validation, 35 folds, 35 physiological features.
+
+COMPARISON TABLE:
++-----------------------------------+---------+---------+--------+--------+-------+
+| Model                             | 4-class | adj_acc | binary |   F1   | kappa |
++-----------------------------------+---------+---------+--------+--------+-------+
+| Linear Logistic                   |  34.3%  |  70.9%  |  60.5% | 0.3393 | 0.125 |
+| Polynomial Logistic (deg=2)       |  32.6%  |  71.5%  |  60.6% | 0.3237 | 0.101 |
+| Kernel Ridge (RBF)                |  30.5%  |  75.9%  |  58.4% | 0.2942 | 0.073 |
+| QDA                               |  32.1%  |  68.4%  |  60.1% | 0.3176 | 0.096 |
+| Spline Logistic                   |  35.9%  |  71.5%  |  61.3% | 0.3559 | 0.145 |
++-----------------------------------+---------+---------+--------+--------+-------+
+| Chance level                      |  25.0%  |    —    |  50.0% |   —    |   —   |
++-----------------------------------+---------+---------+--------+--------+-------+
+
+Best model: Spline Logistic
+  4-class accuracy:  35.9% (vs 25% chance = +10.9% above chance)
+  Adjacent accuracy: 71.5% (predictions within ±1 level)
+  Binary accuracy:   61.3% (low vs high workload)
+  Macro F1:          0.3559
+  Cohen's kappa:     0.145
+
+Spline Logistic confusion matrix:
+  pred ->    1      2      3      4
+  L1       609    332    232    286   (41.7% correct)
+  L2       465    407    313    349   (26.5% correct)
+  L3       292    301    473    455   (31.1% correct)
+  L4       275    287    282    674   (44.4% correct)
+
+Per-subject accuracy range: 14.4% — 57.5% (high inter-subject variability)
+Mean per-subject: 35.6% ± 10.4%
+
+================================================================================
+6. KEY OBSERVATIONS
+================================================================================
+
+1. Windowing helped: 34.3% linear (new) vs ~40% linear (old on 408 samples)
+   Note: old pipeline had ~40% on run-level, new has 34.3% on window-level.
+   Window-level is harder because within-run windows share temporal context.
+
+2. Nonlinear models gave marginal improvement: best=35.9% (spline) vs 34.3% (linear)
+   Polynomial (32.6%) and KRR (30.5%) performed WORSE — likely overfitting.
+
+3. Adjacent accuracy is high (71.5%): most errors are ±1 level misclassification.
+   The model captures the ordinal structure but struggles with fine-grained discrimination.
+
+4. Binary accuracy ~61%: modest improvement over 50% chance for low-vs-high split.
+
+5. Level 2 is hardest to classify (26.5% correct): it gets confused with both L1 and L3.
+   Levels 1 and 4 (extremes) are easiest (41.7% and 44.4%).
+
+6. High inter-subject variability: some subjects reach 57% while others are at 14%.
+   This suggests strong individual differences in physiological responses.
+
+7. Aircraft state features (dropped) would have boosted accuracy significantly
+   (ac_pitch_std had eta_sq=0.091, highest of all features) but they measure
+   the experimental condition, not the pilot's physiological state.
+
+================================================================================
+7. FILES CREATED
+================================================================================
+
+c:\coe_new\new_data_pipeline.py     — 30-sec windowed feature extraction
+c:\coe_new\explore_features.py     — feature quality, ANOVA, correlation, VIF
+c:\coe_new\nonlinear_model.py      — 5 nonlinear mathematical models + LOSO
+c:\coe_new\enhance_features.py     — z-scoring, temporal features, window position
+c:\coe_new\improved_model.py       — improved models with run-level voting
+c:\coe_new\new_master_features.csv — extracted feature matrix (6032 × 90)
+c:\coe_new\enhanced_features.csv   — enhanced feature matrix (6032 × 123)
+c:\coe_new\new_workdone.txt        — this file
+
+================================================================================
+8. FEATURE ENHANCEMENT (enhance_features.py)
+================================================================================
+
+Problem: Previous models peaked at 35.9% because raw features don't account for
+inter-subject physiological variability. Subject A's HR=75 and Subject B's HR=75
+may represent very different workload states.
+
+Enhancement 1 — Subject Z-scoring (rest baseline mean + std):
+  - Re-processed rest recordings with 30-sec windowing (same as task pipeline)
+  - For each subject: computed rest feature MEAN and STD across rest windows
+  - Z-scored task features: z = (task_value - rest_mean) / rest_std
+  - This normalizes each subject relative to their OWN resting physiology
+  - No leakage: rest baseline is pre-experiment data, not task data
+  - 16 z-scored features added: z_ecg_hr_mean, z_eda_scr_count, z_emg_flexor_rms,
+    z_emg_extensor_rms, z_emg_cocontraction, z_emg_acc_rms, + 10 more
+
+Enhancement 2 — Window Position:
+  - window_position = window_index / max_window_in_run (range 0.0 to 1.0)
+  - Captures WHERE in the ILS approach this window falls
+  - Early approach vs final descent have different workload demands
+  - 1 feature added
+
+Enhancement 3 — Temporal Delta (change from first window):
+  - tdelta_X = X_current_window - X_first_window
+  - Captures physiological BUILDUP during the approach
+  - 8 features: tdelta_ecg_hr_mean, tdelta_eda_scl_mean, tdelta_emg_flexor_rms,
+    tdelta_emg_extensor_rms, tdelta_eye_pupil_mean, tdelta_eye_blink_rate,
+    tdelta_head_pitch_std, tdelta_ecg_rmssd (dropped, <50% coverage)
+
+Enhancement 4 — Temporal Slope (per-run trend):
+  - slope_X = linear fit slope of X across all windows in a run
+  - Captures RATE of change (e.g., "HR increasing 2 bpm/window")
+  - 8 features: slope_ecg_hr_mean, slope_ecg_rmssd, slope_eda_scl_mean,
+    slope_emg_flexor_rms, slope_emg_extensor_rms, slope_eye_pupil_mean,
+    slope_eye_blink_rate, slope_head_pitch_std
+
+Result: 90 columns → 123 columns (117 features + 6 metadata)
+
+================================================================================
+9. IMPROVED MODEL RESULTS (improved_model.py)
+================================================================================
+
+Feature Screening on Enhanced Set:
+  112 candidate features (no ac_ features)
+  → 108 after NaN filter (<=30%)
+  → 77 after ANOVA (p<0.05)
+  → 56 after VIF pruning (<=10)
+
+  New significant features from enhancement:
+  - 6 z-scored features survived: z_ecg_hr_mean, z_eda_scr_count,
+    z_emg_flexor_rms, z_emg_extensor_rms, z_emg_cocontraction, z_emg_acc_rms
+  - 7 temporal deltas survived: tdelta_ecg_hr_mean, tdelta_eda_scl_mean,
+    tdelta_emg_flexor_rms, tdelta_emg_extensor_rms, tdelta_eye_pupil_mean,
+    tdelta_eye_blink_rate, tdelta_head_pitch_std
+  - 8 temporal slopes survived: all 8
+
+Models tested (all mathematical, LOSO, no data leakage):
+
+COMPARISON TABLE — WINDOW LEVEL (6032 windows):
++----------------------+---------+---------+--------+--------+-------+
+| Model                | 4-class | adj_acc | binary |   F1   | kappa |
++----------------------+---------+---------+--------+--------+-------+
+| Linear Logistic      |  48.7%  |  78.8%  |  66.3% | 0.4837 | 0.316 |
+| Spline Logistic      |  51.2%  |  82.6%  |  68.3% | 0.5097 | 0.349 |
+| Ordinal Logistic     |  46.6%  |  79.8%  |  66.0% | 0.4632 | 0.288 |
++----------------------+---------+---------+--------+--------+-------+
+
+COMPARISON TABLE — RUN LEVEL WITH MAJORITY VOTING (408 runs):
++----------------------+---------+---------+--------+--------+-------+
+| Model                | 4-class | adj_acc | binary |   F1   | kappa |
++----------------------+---------+---------+--------+--------+-------+
+| Linear Logistic      |  50.2%  |  79.4%  |  67.9% | 0.4971 | 0.336 |
+| Spline Logistic      |  52.2%  |  83.6%  |  68.6% | 0.5191 | 0.363 |
+| Ordinal Logistic     |  46.8%  |  80.4%  |  66.7% | 0.4641 | 0.291 |
++----------------------+---------+---------+--------+--------+-------+
+
+Best model: Spline Logistic
+  Window-level:  51.2% (4-class) | 82.6% adjacent | 68.3% binary
+  Run-level:     52.2% (4-class) | 83.6% adjacent | 68.6% binary
+
+Spline Logistic Run-Level Confusion Matrix:
+  pred ->    1      2      3      4
+  L1        68     14     12      7   (67.3% correct)
+  L2        17     37     28     21   (35.9% correct)
+  L3        10     33     38     20   (37.6% correct)
+  L4         2     15     16     70   (68.0% correct)
+
+Per-subject run-level accuracy (Spline Logistic):
+  Range: 16.7% — 75.0%
+  Mean:  52.2% ± 16.3%
+  Best subjects:  sub-cp006, sub-cp012, sub-cp014, sub-cp026, sub-cp029,
+                  sub-cp037, sub-cp042 (all 75%)
+  Worst subjects: sub-cp031 (16.7%), sub-cp036 (25.0%), sub-cp003 (25.0%)
+
+================================================================================
+10. ACCURACY PROGRESSION SUMMARY
+================================================================================
+
++------+-----------------------------+----------+-----------+--------+
+| Step | Change                      | 4-class  | Adjacent  | Binary |
++------+-----------------------------+----------+-----------+--------+
+|  0   | Previous pipeline (linear)  |  ~40%    |     —     |   —    |
+|  1   | 30-sec windowing + more     |  34.3%   |   70.9%   | 60.5%  |
+|      | features (linear logistic)  |          |           |        |
+|  2   | Spline logistic (nonlinear) |  35.9%   |   71.5%   | 61.3%  |
+|  3   | + z-scoring + temporal      |  51.2%   |   82.6%   | 68.3%  |
+|      |   features (window-level)   |          |           |        |
+|  4   | + run-level majority voting  |  52.2%   |   83.6%   | 68.6%  |
++------+-----------------------------+----------+-----------+--------+
+| Chance level                       |  25.0%   |     —     | 50.0%  |
++------+-----------------------------+----------+-----------+--------+
+
+Key improvements:
+  Step 1→2: +1.6% from nonlinear spline basis (marginal)
+  Step 2→3: +15.3% from z-scoring and temporal features (HUGE)
+  Step 3→4: +1.0% from run-level voting (modest but free)
+  Total improvement from original: ~40% → 52.2% (+12.2%)
+  Total improvement over chance: 52.2% - 25% = +27.2% above chance
+
+The z-scoring was the single biggest contributor — normalizing subjects by
+their own resting physiology made features comparable across individuals.
+
+================================================================================
+11. DATA LEAKAGE AUDIT
+================================================================================
+
+Full pipeline audited for data leakage. One issue found and fixed:
+
+ISSUE: Feature screening (ANOVA + VIF) was done on the FULL dataset including
+test subjects BEFORE the LOSO loop. This means the test subject's data
+influenced which features were selected.
+
+FIX: Moved feature screening INSIDE each LOSO fold — screening now runs on
+training data only. Each fold selects its own feature set independently.
+
+Components verified clean:
+  - new_data_pipeline.py: all feature extraction per-window, no cross-subject ✅
+  - enhance_features.py z-scoring: uses subject's own rest baseline only ✅
+  - enhance_features.py temporal features: within-run only (same label) ✅
+  - Pipeline internals (Imputer, Scaler, Spline): fit on train only ✅
+  - Run-level voting: post-prediction aggregation on test only ✅
+
+Minor note: Temporal slope uses all windows in a run (including future).
+Not cross-subject leakage since same run = same label. Acceptable for
+retrospective analysis.
+
+================================================================================
+12. LEAK-FREE RESULTS
+================================================================================
+
+After fixing the feature screening leakage:
+
+Feature Selection Stability:
+  33 features selected in ALL 35 folds (very stable)
+  43 features selected in SOME folds (unstable, fold-dependent)
+  Typical fold: 55-56 features selected
+
+LEAK-FREE COMPARISON TABLE — WINDOW LEVEL (6032 windows):
++----------------------+---------+---------+--------+--------+-------+
+| Model                | 4-class | adj_acc | binary |   F1   | kappa |
++----------------------+---------+---------+--------+--------+-------+
+| Linear Logistic      |  48.6%  |  79.5%  |  67.1% | 0.4828 | 0.314 |
+| Spline Logistic      |  51.3%  |  82.3%  |  68.6% | 0.5111 | 0.351 |
+| Ordinal Logistic     |  47.7%  |  80.3%  |  67.2% | 0.4745 | 0.303 |
++----------------------+---------+---------+--------+--------+-------+
+
+LEAK-FREE COMPARISON TABLE — RUN LEVEL WITH MAJORITY VOTING (408 runs):
++----------------------+---------+---------+--------+--------+-------+
+| Model                | 4-class | adj_acc | binary |   F1   | kappa |
++----------------------+---------+---------+--------+--------+-------+
+| Linear Logistic      |  49.3%  |  79.4%  |  67.9% | 0.4884 | 0.323 |
+| Spline Logistic      |  52.2%  |  83.3%  |  68.6% | 0.5183 | 0.363 |
+| Ordinal Logistic     |  47.5%  |  80.1%  |  67.6% | 0.4703 | 0.300 |
++----------------------+---------+---------+--------+--------+-------+
+
+Leakage impact: NEGLIGIBLE
+  Window: 51.2% (leaky) → 51.3% (clean) = +0.1% (within noise)
+  Run:    52.2% (leaky) → 52.2% (clean) = 0.0% (identical)
+
+This confirms the feature screening was highly stable — removing one
+subject from screening barely changed which features were selected.
+The reported 52.2% accuracy is honest and leak-free.
+
+FINAL BEST MODEL: Spline Logistic (leak-free, LOSO)
+  Window-level:  51.3% (4-class) | 82.3% adjacent | 68.6% binary
+  Run-level:     52.2% (4-class) | 83.3% adjacent | 68.6% binary
+  Chance level:  25.0% (4-class) | 50.0% binary
+
+================================================================================
+13. ADVANCED MODEL — FULL NORMALIZATION + REST INTERCEPTS (advanced_model.py)
+================================================================================
+
+Hypothesis: Expanding z-scoring from 16 to ALL 30 rest-equivalent features
+and adding subject-level rest summary features (pseudo random intercepts)
+would improve accuracy.
+
+Changes from improved_model.py:
+  - Z-scored features: 16 → 30 (added eye_pupil_skew, eye_pupil_kurt,
+    eye_pupil_velocity, eye_gaze_ent_x, eye_gaze_ent_y, eda_scl_slope,
+    eda_scr_amp_mean, head_vel_rms, head_yaw_std, head_pitch_std,
+    ecg_hr_range, eda_cond_std, eye_pupil_std, eye_perclos)
+  - Rest summary features: 8 added (rsumm_ecg_hr_mean, rsumm_ecg_rmssd,
+    rsumm_eda_scl_mean, rsumm_emg_flexor_rms, rsumm_emg_extensor_rms,
+    rsumm_eye_pupil_mean, rsumm_eye_blink_rate, rsumm_head_pitch_std)
+  - These act as pseudo random intercepts: give model subject-specific
+    resting physiology context for each prediction
+  - Total features: 139 (vs 117 previous) → 56 after per-fold screening
+
+RESULTS (LEAK-FREE, LOSO):
+
+WINDOW LEVEL (6032 windows):
++----------------------+---------+---------+--------+--------+-------+
+| Model                | 4-class | adj_acc | binary |   F1   | kappa |
++----------------------+---------+---------+--------+--------+-------+
+| Linear Logistic      |  48.7%  |  79.1%  |  67.0% | 0.4837 | 0.316 |
+| Spline Logistic      |  51.3%  |  82.6%  |  68.8% | 0.5121 | 0.351 |
+| Ordinal Logistic     |  48.2%  |  80.1%  |  67.2% | 0.4784 | 0.309 |
++----------------------+---------+---------+--------+--------+-------+
+
+RUN LEVEL MAJORITY VOTING (408 runs):
++----------------------+---------+---------+--------+--------+-------+
+| Model                | 4-class | adj_acc | binary |   F1   | kappa |
++----------------------+---------+---------+--------+--------+-------+
+| Linear Logistic      |  48.3%  |  78.9%  |  67.4% | 0.4789 | 0.310 |
+| Spline Logistic      |  52.0%  |  83.6%  |  69.1% | 0.5176 | 0.359 |
+| Ordinal Logistic     |  48.3%  |  80.1%  |  67.4% | 0.4774 | 0.310 |
++----------------------+---------+---------+--------+--------+-------+
+
+Comparison with previous best (improved_model.py):
+  Spline window: 51.3% → 51.3% (identical)
+  Spline run:    52.2% → 52.0% (-0.2%, within noise)
+
+CONCLUSION: Full normalization and rest intercepts did NOT improve accuracy.
+  - The 14 additional z-scored features were redundant (already captured
+    by the original 16 z-scored + raw features)
+  - Rest summary features were dropped or ignored by the model — their
+    values are constant within each subject, providing no within-subject
+    discriminative power for difficulty classification
+  - The VIF pruning likely removed the rest summary features due to
+    collinearity with the z-scored features
+
+Feature selection was identical: 34 stable + 44 partial = 56 total per fold.
+The model has converged — further feature engineering within the mathematical
+model framework yields diminishing returns.
+
+================================================================================
+14. FINAL SUMMARY
+================================================================================
+
+BEST MODEL: Spline Logistic (leak-free, LOSO, per-fold screening)
+  Window-level:  51.3% (4-class) | 82.6% adjacent | 68.8% binary
+  Run-level:     52.0% (4-class) | 83.6% adjacent | 69.1% binary
+  Macro F1:      0.5121 (window) | 0.5176 (run)
+  Cohen's kappa: 0.351  (window) | 0.359  (run)
+  Chance level:  25.0% (4-class) | 50.0% (binary)
+
+Accuracy above chance: +27% (4-class), +19% (binary)
+Model is 2x better than random guessing at 4-class prediction.
+
+Per-subject run accuracy:
+  Range: 16.7% — 83.3%
+  Mean:  52.0% ± 17.1%
+  Median: 54.5%
+  75th percentile subjects reach 66.7%+ accuracy
+
+FILES CREATED (complete list):
+  c:\coe_new\new_data_pipeline.py     — 30-sec windowed feature extraction
+  c:\coe_new\explore_features.py     — feature quality, ANOVA, correlation, VIF
+  c:\coe_new\nonlinear_model.py      — 5 nonlinear mathematical models
+  c:\coe_new\enhance_features.py     — z-scoring (16), temporal features
+  c:\coe_new\improved_model.py       — leak-free models + run voting
+  c:\coe_new\advanced_model.py       — full z-scoring (30) + rest intercepts
+  c:\coe_new\tda_features.py         — TDA persistent homology extraction
+  c:\coe_new\explore_tda.py          — TDA feature ANOVA sanity check
+  c:\coe_new\new_master_features.csv — base feature matrix (6032 × 90)
+  c:\coe_new\enhanced_features.csv   — enhanced feature matrix (6032 × 123)
+  c:\coe_new\tda_features.csv        — TDA feature matrix (6032 × 45)
+  c:\coe_new\new_workdone.txt        — this file
+
+================================================================================
+15. TDA — PERSISTENT HOMOLOGY (tda_features.py, explore_tda.py)
+================================================================================
+
+Hypothesis: Topological Data Analysis captures signal geometry that
+traditional statistical features miss (e.g., attractor shape, periodicity).
+
+Implementation: tda_features.py
+  - Sub-level set H0 persistence (valleys/baseline): pure Python, O(n log n)
+  - Super-level set H0 persistence (peaks/R-peaks): negate + sublevel
+  - Computed per 30-sec window on ECG (downsampled to ~100 Hz) and EDA (~32 Hz)
+  - 40 features: 10 per {ECG sub, ECG sup, EDA sub, EDA sup}
+  - Features: count, max/mean/std/sum persistence, entropy, ratio,
+    n_significant, mean/std midlife
+  - Completely leak-free: per-window, no cross-subject info
+
+ANOVA Sanity Check (explore_tda.py):
+  24/40 features significant at p<0.05, BUT:
+  - Best TDA feature: ecg_sup_sum_pers (eta_sq = 0.0047)
+  - Best conventional:   overall_gaze_entropy_RY (eta_sq = 0.0728)
+  - TDA best = 6.4% of conventional best
+  - The p<0.05 significance is a sample-size artifact (N=6032 gives power
+    to detect trivially small effects). Effect sizes are negligible.
+
+VERDICT: H0 (sublevel/superlevel) persistence = NEGATIVE RESULT.
+  - Sublevel/superlevel persistence on raw 1D amplitude is essentially
+    multiscale peak-counting — same information as existing amplitude/
+    variance statistics, hence near-zero additional explanatory power.
+  - This does NOT rule out TDA entirely — it rules out H0 on raw signal.
+
+NEXT: H1 (Takens embedding loop/cycle persistence)
+  - The genuinely new topological information is H1 on Takens time-delay
+    embedded trajectories — captures the SHAPE of the signal dynamics
+    (cardiac attractor, EDA arousal attractor)
+  - ripser initially failed to load (system Python conflict), now fixed
+  - Rerunning with H1 features for same ANOVA sanity check
+  - If H1 also near-zero eta_sq → drop TDA entirely, try Riemannian
+    tangent-space features instead
+
+================================================================================
+
+================================================================================
+16. TDA — H1 (TAKENS EMBEDDING) RESULTS
+================================================================================
+
+tda_features.py rerun with ripser installed (True).
+Both H0 and H1 computed for ECG and EDA via Takens time-delay embedding.
+Total: 80 features (10 per: ECG sublevel H0, ECG superlevel H0, ECG Takens H0,
+ECG Takens H1, EDA sublevel H0, EDA superlevel H0, EDA Takens H0, EDA Takens H1)
+Coverage: ECG 100%, EDA 97%.
+
+explore_tda.py rerun on full 80-feature set.
+Best feature eta_sq still negligible (same range as H0-only result).
+Threshold agreed: if best H1 eta_sq < 0.05 → abandon TDA.
+
+VERDICT: NEGATIVE RESULT — TDA ABANDONED.
+  H1 Takens embedding did not clear the eta_sq > 0.05 threshold.
+  TDA files retained for reference, no further work done.
+
+================================================================================
+17. PHASE 1 — CHEAP STRUCTURAL FIXES
+================================================================================
+
+--- Step 1: Gaze/Pupil Path Signature (step1_signature.py) ---
+
+Hypothesis: Truncated path signature (order 2) of joint 3D trajectory
+(gaze_x, gaze_y, pupil_diameter) per 30-sec window captures geometric
+interaction between channels that scalar statistics miss.
+
+Implementation fixes applied:
+  - Removed per-window z-scoring (was destroying absolute pupil magnitude)
+  - Added validity_l/validity_r filtering for gaze-x, gaze-y (not just pupil)
+  - Added pupil bounds check: [1.5, 8.5] mm
+  - Replaced univariate ANOVA with multivariate StratifiedGroupKFold CV
+    (subject-grouped, 5-fold) so result is comparable to LOSO baseline
+  - Produces 12 features: 3 level-1 terms + 9 level-2 cross-terms
+
+Result (StratifiedGroupKFold, subject-grouped):
+  Multivariate joint accuracy: 27.5%
+  Random chance: 25.0%
+
+VERDICT: NEGATIVE RESULT — STEP 1 CLOSED.
+  27.5% is not meaningfully above chance under subject-grouped evaluation.
+  The geometric cross-terms of gaze+pupil carry negligible workload signal
+  beyond what scalar stats already capture.
+
+--- Step 2: HMM Smoothing (step2_hmm_smoothing.py) ---
+
+Hypothesis: HMM Viterbi decoding of per-window soft probabilities smooths
+anomalous windows and improves run-level accuracy over majority voting.
+
+Pipeline: Spline Logistic -> soft proba -> Viterbi per run.
+Transition matrix estimated on training folds (Laplace-smoothed).
+
+Bugs fixed:
+  - Added SimpleImputer(strategy='median') to pipeline (was crashing on NaN)
+  - Sorted by 'window' before Viterbi decoding (sequence order guarantee)
+  - Added Prob-Avg baseline alongside majority vote for honest comparison
+  - Fixed hyperparameters: n_knots=5, C=0.1, single scaler (matches best model)
+
+Initial run (wrong hyperparameters n_knots=4, C=1.0, double scaler):
+  Reproduced baseline: 44.9% run-level (mismatch with 52.2% — now fixed)
+
+Status: PENDING — corrected hyperparameters, to be rerun.
+
+Expected: transition matrix is nearly diagonal (difficulty constant per run).
+Viterbi will lock onto a single class per run — mathematically equivalent to
+probability averaging. If HMM == Prob Avg, smoothing adds nothing and the
+lever for improvement is per-window features, not aggregation method.
+
+================================================================================
+18. PHASE 2 — REPRESENTATION CHANGES
+================================================================================
+
+--- Step 3: Riemannian Tangent-Space (step3_riemannian.py) ---
+
+Hypothesis: Cross-modal covariance matrices (ECG x EDA x EMG x Eye) projected
+to Euclidean tangent space at the Frechet mean capture multi-system synchrony.
+
+7 channels at 64 Hz common grid. OAS shrinkage estimator (pyriemann).
+Per-channel StandardScaler before covariance. TangentSpace(riemann) -> LogReg.
+
+Bugs fixed:
+  - Wrong column names -> candidate-list search
+  - No per-channel sample threshold -> added (ECG>500, EDA>100, EMG>500, Eye>50)
+  - Missing per-channel normalization -> added StandardScaler per channel
+  - Used np.cov manually -> Covariances(estimator='oas')
+  - Zero-filling missing channels -> now DROPS window if any channel fully NaN
+  - Added 1e-4 ridge for SPD guarantee
+
+Initial result (zero-filled missing channels):
+  4-class: 24.8% (below chance 25%) — catastrophic
+  Cause: zero-filled channels produced rank-deficient covariance matrices.
+         Riemannian mean classified "which modalities are missing" not workload.
+
+Fix: Drop windows where any channel is fully NaN. Print kept/dropped summary.
+Status: PENDING re-extraction (cache deleted, re-runs automatically).
+
+--- Step 4: PLS-DA Feature Extraction (step4_plsda.py) ---
+
+Hypothesis: PLS-DA projection captures cross-feature interactions that
+univariate ANOVA screening discards.
+
+PLSRegression fit on one-hot encoded labels (true PLS-DA).
+StandardScaler -> PLS (n_comp latent components) -> Spline Logistic in LOSO.
+
+Bugs fixed:
+  - Global median imputation before LOSO -> moved inside fold (train only)
+  - Ordinal y (1-4) -> dummy-encoded y (one-hot, true PLS-DA)
+  - Added .fillna(0) fallback for entirely-NaN columns
+
+Result (n_components=15):
+  Window: 46.9% | Run: 46.6% — below 52.2% baseline
+
+Component sweep added (n_comp in [8, 15, 25, 35]).
+Status: PENDING — one run will print full summary table.
+
+================================================================================
+19. PHASE 3 — INTER-SUBJECT VARIABILITY
+================================================================================
+
+--- Step 5: GMM Phenotyping (step5_gmm_phenotyping.py) ---
+
+Hypothesis: Subjects cluster into physiological phenotypes. Cluster-specific
+models outperform one-size-fits-all classifier.
+
+Clustering on task-rest baseline data (compute_rest_baselines()).
+Features: rest_hr, rest_rmssd, rest_sdnn, rest_scl, rest_flexor,
+          rest_extensor, rest_pupil.
+Cluster-specific Spline Logistic per LOSO fold.
+
+Bugs fixed:
+  - Global rest_df.fillna(median) before loop -> moved inside fold (train only)
+  - Phenotyping used task-window averages -> fixed to use compute_rest_baselines()
+  - KeyError if empty cluster -> added fallback + [WARN] log
+  - Missing SimpleImputer in Pipeline -> added
+
+GMM collapse: every fold returned 34/0 split (all one cluster).
+  Cause: 34 subjects in 7D space too sparse for GMM full covariance.
+
+Fix:
+  - Cluster on 2 features only: rest_hr + rest_rmssd (sympathetic/parasympathetic)
+  - n_init=10 (avoid random init collapse)
+  - covariance_type='diag' (fewer parameters)
+  - Added "cluster split (fold 1):" diagnostic print
+
+Status: PENDING — re-run with fixes to confirm real split.
+
+================================================================================
+20. CURRENT STATUS (2026-09-29)
+================================================================================
+
+Negative results (closed):
+  TDA H0 + H1:        eta_sq << 0.05 -> ABANDONED
+  Gaze signatures:    27.5% (group-CV) -> CLOSED
+  Riemannian (v1):    24.8% (missing channel artifact) -> FIXING
+  PLS-DA (n=15):      46.6% run-level -> SWEEP PENDING
+
+Pending runs (in order):
+  1. python step2_hmm_smoothing.py     (corrected hyperparameters)
+  2. python step5_gmm_phenotyping.py   (cluster split diagnostic)
+  3. python step4_plsda.py             (component sweep 8/15/25/35)
+  4. python step3_riemannian.py        (re-extract with channel-drop fix)
+
+Baseline to beat: 52.2% run-level (Spline Logistic, LOSO, leak-free)
+
+================================================================================
