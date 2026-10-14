@@ -716,3 +716,145 @@ Pending runs (in order):
 Baseline to beat: 52.2% run-level (Spline Logistic, LOSO, leak-free)
 
 ================================================================================
+
+================================================================================
+21. FINAL EXPERIMENT RESULTS (all runs completed 2026-09-29)
+================================================================================
+
+All pending experiments ran. Updated results below.
+
+--- Step 2 (HMM Smoothing) — FINAL ---
+
+Corrected hyperparameters (n_knots=5, C=0.1, single StandardScaler).
+Baseline reproduced exactly: Raw Spline 51.3% window / 52.2% run (correct).
+
+WINDOW LEVEL:
+  Raw Spline:  4-class=51.3% | adj=82.3% | bin=68.6%
+  HMM Path:    4-class=50.6% | adj=83.1% | bin=68.2%
+
+RUN LEVEL:
+  Majority:    4-class=52.2% | adj=83.3% | bin=68.6%
+  Prob Avg:    4-class=50.7% | adj=83.1% | bin=67.9%
+  HMM Vote:    4-class=50.7% | adj=83.1% | bin=67.9%
+
+VERDICT: NEGATIVE — HMM Viterbi = Prob Avg < Majority Vote.
+  HMM adds nothing over simple majority vote. Since difficulty is constant
+  within a run, the transition matrix is near-diagonal and Viterbi just locks
+  onto a single class — mathematically equivalent to probability averaging.
+  The ceiling is per-window feature quality, not aggregation method. CLOSED.
+
+--- Step 3 (Riemannian) — FINAL ---
+
+Dual extraction: 7-channel (with eye, 34 subjects) + 4-channel (all 35 subjects).
+All fixes applied: 30% valid-fraction threshold, SPD ridge only in extraction,
+StandardScaler between TangentSpace and LogReg, C=0.1.
+
+Extraction summary:
+  sub-cp003: 7ch=0, 4ch=205 [eye-excluded]
+  sub-cp005: 7ch=16, 4ch=16 (very few windows — near-empty run)
+  All others: 7ch ≈ 4ch ≈ normal counts
+
+7-CHANNEL (ECG+EDA+EMG+EYE), 5598 windows, 34 subjects:
+  4-class: 24.8% | adjacent: 72.8%
+
+4-CHANNEL (ECG+EDA+EMG), 5842 windows, 35 subjects:
+  4-class: 25.4% | adjacent: 75.0%
+
+VERDICT: NEGATIVE — both at random chance (25%).
+  Cross-modal covariance structure carries no workload signal at 30-sec resolution.
+  Workload information in this dataset lives in univariate statistics, not in
+  how channels co-vary with each other. CLOSED.
+
+--- Step 4 (PLS-DA) — FINAL ---
+
+Component sweep n_comp in [8, 15, 25, 35]:
+
+  n_comp=8:   win=48.1% | run=49.3%  (best)
+  n_comp=15:  win=46.9% | run=46.6%
+  n_comp=25:  win=46.3% | run=48.8%
+  n_comp=35:  win=44.4% | run=45.6%
+
+VERDICT: NEGATIVE — monotonically worse as components increase.
+  PLS-DA orthogonal projection actively destroys nonlinear structure that
+  Spline basis exploits from ANOVA-selected features. ANOVA+VIF screening is
+  genuinely better than PLS latent projection for this problem. CLOSED.
+
+--- Step 5 (GMM Phenotyping) — FINAL ---
+
+Cluster split confirmed: [28, 6] at fold 1 — real split achieved.
+28 subjects in cluster 1 (low resting HR), 6 in cluster 0 (high resting HR).
+
+WINDOW LEVEL:  4-class=46.8% | adj=79.8%
+RUN LEVEL:     4-class=48.0% | adj=79.4%
+
+VERDICT: NEGATIVE — 48.0% < 52.2% baseline.
+  GMM split is real but cluster 0 (only 6 subjects) too small for ANOVA to
+  reliably screen features — feature counts wildly variable (32-59 for cluster 0
+  vs stable 55-58 for cluster 1). N=35 can't support phenotype-specific models.
+  CLOSED.
+
+--- Step 1 (Signatures) — FINAL ---
+  Multivariate joint accuracy: 27.5% (group-stratified 5-fold CV)
+  VERDICT: NEGATIVE. Not meaningfully above chance. CLOSED.
+
+================================================================================
+22. COMPLETE RESULTS SUMMARY
+================================================================================
+
++-------+--------------------------------+----------+----------+
+| Step  | Technique                      | Run-4cls | vs 52.2% |
++-------+--------------------------------+----------+----------+
+|  1    | Gaze/Pupil Path Signatures     |  27.5%*  | -24.7%   |
+|  2    | HMM Smoothing                  |  50.7%   |  -1.5%   |
+|  3    | Riemannian 7-ch                |  24.8%** | -27.4%   |
+|  3    | Riemannian 4-ch                |  25.4%** | -26.8%   |
+|  4    | PLS-DA (best n=8)              |  49.3%   |  -2.9%   |
+|  5    | GMM Phenotyping                |  48.0%   |  -4.2%   |
+|  —    | BASELINE (Spline+ANOVA+VIF)    |  52.2%   |   —      |
++-------+--------------------------------+----------+----------+
+* group-stratified CV (not strictly LOSO)
+** window-level (no run-level voting — random chance)
+
+Nothing beat the 52.2% baseline.
+
+Key finding: The workload signal is encoded in UNIVARIATE statistics of
+individual channels, not in cross-channel relationships or sequence dynamics.
+The ANOVA+VIF pipeline already found the optimal feature set for this task.
+
+================================================================================
+23. FINAL PROJECT STATUS (2026-10-14)
+================================================================================
+
+BEST MODEL: Spline Logistic (leak-free LOSO, per-fold feature screening)
+  Window-level:  51.3% (4-class) | 82.3% adjacent | 68.6% binary
+  Run-level:     52.2% (4-class) | 83.3% adjacent | 68.6% binary
+  Chance level:  25.0% (4-class) | 50.0% binary
+  Above chance:  +27.2% (4-class), +18.6% (binary)
+
+Per-subject run accuracy:
+  Range:  16.7% — 75.0%
+  Mean:   52.2% +/- 16.3%
+  The large spread reflects genuine individual physiological variability —
+  some subjects simply do not produce 4 separable physiological states
+  across the 4 difficulty levels.
+
+All experiments CLOSED. No further improvements possible within the
+mathematical model (no ML) framework without new features or new data.
+
+FILES (final list):
+  new_data_pipeline.py      — 30-sec windowed feature extraction
+  enhance_features.py       — z-scoring (16 features) + temporal features
+  explore_features.py       — ANOVA, VIF, correlation analysis
+  nonlinear_model.py        — 5 nonlinear mathematical models
+  improved_model.py         — BEST MODEL: leak-free LOSO + majority voting
+  advanced_model.py         — full z-scoring (30) + rest intercepts experiment
+  tda_features.py           — TDA persistent homology (H0+H1)
+  explore_tda.py            — TDA ANOVA sanity check
+  step1_signature.py        — Gaze/pupil path signature
+  step2_hmm_smoothing.py    — HMM Viterbi smoothing
+  step3_riemannian.py       — Cross-modal Riemannian covariance (7ch+4ch)
+  step4_plsda.py            — PLS-DA feature extraction
+  step5_gmm_phenotyping.py  — GMM physiological phenotyping
+  new_workdone.txt          — this file
+
+================================================================================
