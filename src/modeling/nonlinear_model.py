@@ -22,7 +22,8 @@ from sklearn.pipeline import Pipeline
 
 warnings.filterwarnings('ignore')
 
-INPUT_CSV = Path(r"c:\coe_new\new_master_features.csv")
+ROOT = Path(__file__).resolve().parents[2]
+INPUT_CSV = ROOT / 'outputs' / 'new_master_features.csv'
 
 # 35 features from explore_features.py (no aircraft state features)
 FEATURES = [

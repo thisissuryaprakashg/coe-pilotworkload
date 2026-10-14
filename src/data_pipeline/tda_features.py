@@ -18,7 +18,7 @@ from pathlib import Path
 
 warnings.filterwarnings('ignore')
 
-from new_data_pipeline import (
+from src.data_pipeline.new_data_pipeline import (
     load_run_streams, get_ref_time,
     DATASET_ROOT, WINDOW_DN, BAD_RUNS, is_run_bad,
 )
@@ -29,7 +29,8 @@ try:
 except ImportError:
     HAS_RIPSER = False
 
-OUTPUT_CSV = Path(r"c:\coe_new\tda_features.csv")
+ROOT = Path(__file__).resolve().parents[2]
+OUTPUT_CSV = ROOT / 'outputs' / 'tda_features.csv'
 
 
 # ============================================================

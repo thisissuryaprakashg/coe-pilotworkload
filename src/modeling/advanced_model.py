@@ -23,7 +23,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score, confusion_matrix
 from sklearn.pipeline import Pipeline
 
-from new_data_pipeline import (
+from src.data_pipeline.new_data_pipeline import (
     ecg_window, eda_window, emg_window, eye_window, head_window,
     load_run_streams, get_ref_time,
     DATASET_ROOT, WINDOW_DN, EYE_EXCLUDED_SUBJECTS,
@@ -31,7 +31,8 @@ from new_data_pipeline import (
 
 warnings.filterwarnings('ignore')
 
-INPUT_CSV = Path(r"c:\coe_new\new_master_features.csv")
+ROOT = Path(__file__).resolve().parents[2]
+INPUT_CSV = ROOT / 'outputs' / 'new_master_features.csv'
 META_COLS = {'subject', 'session', 'run_folder', 'run_number', 'difficulty', 'window'}
 EXCLUDE_PREFIXES = ('ac_',)
 

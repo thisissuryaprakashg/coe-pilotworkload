@@ -17,6 +17,8 @@ from scipy import signal as sig
 from scipy.stats import skew, kurtosis, entropy
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+
 warnings.filterwarnings('ignore', message='Mean of empty slice')
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
@@ -31,7 +33,7 @@ OCULO_CSV = Path(
     r"c:\coe_new\multimodal-physiological-monitoring-during-virtual-reality-piloting-tasks-1.0.0"
     r"\starterCode\data_feats\devSubjsFeatMat.csv"
 )
-OUTPUT_CSV = Path(r"c:\coe_new\new_master_features.csv")
+OUTPUT_CSV = ROOT / 'outputs' / 'new_master_features.csv'
 
 WINDOW_SEC = 30.0
 WINDOW_DN = WINDOW_SEC / 86400.0  # 30 sec in MATLAB datenum (days)

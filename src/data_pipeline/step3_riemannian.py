@@ -27,7 +27,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
-from new_data_pipeline import (
+from src.data_pipeline.new_data_pipeline import (
     load_run_streams, get_ref_time,
     DATASET_ROOT, WINDOW_DN, is_run_bad, is_eye_bad
 )
@@ -41,10 +41,12 @@ except ImportError:
 
 warnings.filterwarnings('ignore')
 
-OUTPUT_7CH_COV = Path(r"c:\coe_new\covs_7ch.npy")
-OUTPUT_7CH_META = Path(r"c:\coe_new\covs_7ch_meta.csv")
-OUTPUT_4CH_COV = Path(r"c:\coe_new\covs_4ch.npy")
-OUTPUT_4CH_META = Path(r"c:\coe_new\covs_4ch_meta.csv")
+ROOT = Path(__file__).resolve().parents[2]
+OUTPUT_DIR = ROOT / 'outputs'
+OUTPUT_7CH_COV = OUTPUT_DIR / 'covs_7ch.npy'
+OUTPUT_7CH_META = OUTPUT_DIR / 'covs_7ch_meta.csv'
+OUTPUT_4CH_COV = OUTPUT_DIR / 'covs_4ch.npy'
+OUTPUT_4CH_META = OUTPUT_DIR / 'covs_4ch_meta.csv'
 
 FS_COMMON = 64.0
 MIN_VALID_FRAC = 0.30  # require 30% real samples per channel within a window

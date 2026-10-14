@@ -21,8 +21,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from scipy.stats import mode as scipy_mode
 
-from improved_model import INPUT_CSV, META_COLS, EXCLUDE_PREFIXES, screen_features_silent
-from new_data_pipeline import compute_rest_baselines
+from src.modeling.improved_model import INPUT_CSV, META_COLS, EXCLUDE_PREFIXES, screen_features_silent
+from src.data_pipeline.new_data_pipeline import compute_rest_baselines
 
 warnings.filterwarnings('ignore')
 

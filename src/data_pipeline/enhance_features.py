@@ -19,14 +19,15 @@ from pathlib import Path
 warnings.filterwarnings('ignore')
 
 # import feature extractors from pipeline
-from new_data_pipeline import (
+from src.data_pipeline.new_data_pipeline import (
     ecg_window, eda_window, emg_window, eye_window,
     load_run_streams, get_ref_time,
     DATASET_ROOT, WINDOW_DN, EYE_EXCLUDED_SUBJECTS,
 )
 
-INPUT_CSV = Path(r"c:\coe_new\new_master_features.csv")
-OUTPUT_CSV = Path(r"c:\coe_new\enhanced_features.csv")
+ROOT = Path(__file__).resolve().parents[2]
+INPUT_CSV = ROOT / 'outputs' / 'new_master_features.csv'
+OUTPUT_CSV = ROOT / 'outputs' / 'enhanced_features.csv'
 
 # features to z-score (must exist in both task and rest windows)
 Z_FEATURES = [

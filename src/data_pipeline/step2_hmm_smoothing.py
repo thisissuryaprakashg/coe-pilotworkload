@@ -20,7 +20,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score
 import json
 
-from improved_model import screen_features_silent, INPUT_CSV, META_COLS, EXCLUDE_PREFIXES
+from src.modeling.improved_model import screen_features_silent, INPUT_CSV, META_COLS, EXCLUDE_PREFIXES
 
 warnings.filterwarnings('ignore')
 

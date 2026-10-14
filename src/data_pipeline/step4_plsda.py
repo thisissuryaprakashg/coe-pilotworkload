@@ -20,7 +20,7 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.metrics import accuracy_score, f1_score
 from scipy.stats import mode as scipy_mode
 
-from improved_model import INPUT_CSV, META_COLS, EXCLUDE_PREFIXES
+from src.modeling.improved_model import INPUT_CSV, META_COLS, EXCLUDE_PREFIXES
 
 warnings.filterwarnings('ignore')
 

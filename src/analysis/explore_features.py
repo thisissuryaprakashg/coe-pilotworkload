@@ -16,7 +16,8 @@ from pathlib import Path
 
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
-INPUT_CSV = Path(r"c:\coe_new\new_master_features.csv")
+ROOT = Path(__file__).resolve().parents[2]
+INPUT_CSV = ROOT / 'outputs' / 'new_master_features.csv'
 META_COLS = {'subject', 'session', 'run_folder', 'run_number', 'difficulty', 'window'}
 
 

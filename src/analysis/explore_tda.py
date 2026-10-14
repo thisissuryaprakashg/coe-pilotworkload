@@ -10,7 +10,8 @@ import pandas as pd
 from pathlib import Path
 from scipy.stats import f_oneway, kruskal
 
-INPUT_CSV = Path(r"c:\coe_new\tda_features.csv")
+ROOT = Path(__file__).resolve().parents[2]
+INPUT_CSV = ROOT / 'outputs' / 'tda_features.csv'
 
 
 def main():

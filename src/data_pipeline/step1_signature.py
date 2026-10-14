@@ -20,7 +20,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 
-from new_data_pipeline import (
+from src.data_pipeline.new_data_pipeline import (
     load_run_streams, get_ref_time,
     DATASET_ROOT, WINDOW_DN, is_run_bad, is_eye_bad
 )
@@ -28,7 +28,8 @@ import re
 
 warnings.filterwarnings('ignore')
 
-OUTPUT_CSV = Path(r"c:\coe_new\signature_features.csv")
+ROOT = Path(__file__).resolve().parents[2]
+OUTPUT_CSV = ROOT / 'outputs' / 'signature_features.csv'
 
 def sig2(path):
     """

@@ -24,7 +24,8 @@ from collections import Counter
 
 warnings.filterwarnings('ignore')
 
-INPUT_CSV = Path(r"c:\coe_new\enhanced_features.csv")
+ROOT = Path(__file__).resolve().parents[2]
+INPUT_CSV = ROOT / 'outputs' / 'enhanced_features.csv'
 META_COLS = {'subject', 'session', 'run_folder', 'run_number', 'difficulty', 'window'}
 EXCLUDE_PREFIXES = ('ac_',)
 
