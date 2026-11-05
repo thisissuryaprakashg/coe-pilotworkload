@@ -1,6 +1,7 @@
 venv/
 __pycache__/
 multimodal-physiological-monitoring-during-virtual-reality-piloting-tasks-1.0.0/
+MODALSIM94/
 data_pipeline/
 !src/
 !src/data_pipeline/
