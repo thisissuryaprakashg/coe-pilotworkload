@@ -767,9 +767,9 @@ window.MODALSIM_DATA = {
       "name": "Spline Logistic",
       "tag": "Leak-free spline basis \u00b7 LOSO",
       "acc": 70.2,
-      "badge": "best",
+      "badge": "close",
       "color": "#00d4ff",
-      "verdict": "Best dashboard model for the MODALSIM94 3-tier workload task."
+      "verdict": "Interpretable nonlinear baseline using subject-relative delta features. The session replay uses this model's probabilities."
     },
     {
       "name": "Linear Logistic",
@@ -788,6 +788,14 @@ window.MODALSIM_DATA = {
       "verdict": "Multinomial ordered baseline under the same LOSO protocol."
     },
     {
+      "name": "XGBoost",
+      "tag": "Documented nonlinear benchmark \u00b7 LOSO",
+      "acc": 74.8,
+      "badge": "best",
+      "color": "#a855f7",
+      "verdict": "Best documented MODALSIM94 benchmark result using all subject-relative modalities."
+    },
+    {
       "name": "Random Chance",
       "tag": "3-class uniform baseline",
       "acc": 33.3,
@@ -796,6 +804,11 @@ window.MODALSIM_DATA = {
       "verdict": "Reference floor for three workload tiers."
     }
   ],
+  "benchmark_leader": {
+    "name": "XGBoost",
+    "accuracy": 74.8,
+    "note": "Documented all-modality LOSO benchmark; replay probabilities use the spline baseline."
+  },
   "best_subject": {
     "subject": "0KYTG",
     "run_acc": 100.0,

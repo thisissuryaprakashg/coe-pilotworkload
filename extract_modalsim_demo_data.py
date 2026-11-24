@@ -151,11 +151,13 @@ def main():
 
     methods = [
         {"name": "Spline Logistic", "tag": "Leak-free spline basis · LOSO", "acc": round(spline_acc * 100, 1),
-         "badge": "best", "color": "#00d4ff", "verdict": "Best dashboard model for the MODALSIM94 3-tier workload task."},
+         "badge": "close", "color": "#00d4ff", "verdict": "Interpretable nonlinear baseline using subject-relative delta features. The session replay uses this model's probabilities."},
         {"name": "Linear Logistic", "tag": "L2 logistic · LOSO", "acc": round(accuracy_score(y_true, linear_preds) * 100, 1),
          "badge": "close", "color": "#22c55e", "verdict": "Linear baseline using subject-relative delta features."},
         {"name": "Ordinal Logistic", "tag": "Ordered three-tier baseline · LOSO", "acc": round(accuracy_score(y_true, ordinal_preds) * 100, 1),
          "badge": "close", "color": "#3b82f6", "verdict": "Multinomial ordered baseline under the same LOSO protocol."},
+        {"name": "XGBoost", "tag": "Documented nonlinear benchmark · LOSO", "acc": 74.8,
+         "badge": "best", "color": "#a855f7", "verdict": "Best documented MODALSIM94 benchmark result using all subject-relative modalities."},
         {"name": "Random Chance", "tag": "3-class uniform baseline", "acc": 33.3,
          "badge": "chance", "color": "#475569", "verdict": "Reference floor for three workload tiers."},
     ]
@@ -187,6 +189,11 @@ def main():
         "per_subject": sorted(per_subject, key=lambda row: row["run_acc"], reverse=True),
         "feature_importance": feature_importance,
         "methods": methods,
+        "benchmark_leader": {
+            "name": "XGBoost",
+            "accuracy": 74.8,
+            "note": "Documented all-modality LOSO benchmark; replay probabilities use the spline baseline."
+        },
         "best_subject": {
             "subject": best["subject"],
             "run_acc": round(best["run_acc"] * 100, 1),

@@ -415,7 +415,7 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 0; }
       </div>
       <div class="stat-cards">
         <div class="stat-card accent">
-          <div class="label">Run Accuracy</div>
+          <div class="label" id="hdr-accuracy-label">Run Accuracy</div>
           <div class="value" id="hdr-run-acc">–</div>
           <div class="sub">vs 25% chance</div>
         </div>
@@ -492,8 +492,8 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 0; }
       </div>
       <div class="pipe-step">
         <div class="pipe-icon">🌊</div>
-        <div class="pipe-name">Spline Logistic</div>
-        <div class="pipe-desc">B-spline basis → L2 logistic regression + run voting</div>
+        <div class="pipe-name" id="pipeline-model-name">Spline Logistic</div>
+        <div class="pipe-desc" id="pipeline-model-description">B-spline basis → L2 logistic regression + run voting</div>
         <div class="pipe-tag" id="pipe-acc">52.2% run-level</div>
       </div>
     </div>
@@ -880,12 +880,16 @@ function switchDataset(d) {
   subtitle.textContent = isModalsim
     ? 'Leak-free subject-relative physiological workload classification — 3 workload tiers'
     : 'Physiological signal analysis for VR pilot workload classification — 4 difficulty levels';
-  badge.textContent = 'Spline Logistic · LOSO';
+  badge.textContent = isModalsim
+    ? 'XGBoost benchmark leader · 74.8%'
+    : 'Spline Logistic · LOSO';
+  document.getElementById('hdr-accuracy-label').textContent =
+    isModalsim ? 'Replay Accuracy' : 'Run Accuracy';
   document.getElementById('dataset-guide-title').textContent = `${info.name} Dataset Guide`;
   document.getElementById('dataset-guide-subtitle').textContent = info.subtitle;
   document.getElementById('pipeline-subtitle').textContent = `${info.name} processing path from recorded signals to LOSO workload prediction`;
   document.getElementById('methods-subtitle').textContent = isModalsim
-    ? 'Four approaches shown for the controlled 94-subject, 3-class LOSO benchmark.'
+    ? 'Five approaches shown for the controlled 94-subject, 3-class LOSO benchmark; XGBoost is the documented leader.'
     : 'Seven mathematical methods evaluated under identical LOSO cross-validation — 35 subjects, 4-class run-level accuracy';
   document.getElementById('chance-line-label').textContent =
     isModalsim ? '│ 33.3% chance line' : '│ 25% chance line';
@@ -929,6 +933,11 @@ function switchDataset(d) {
   document.getElementById('pipe-feature-count').textContent = info.featureCount;
   document.getElementById('pipe-normalization').textContent = info.normalization;
   document.getElementById('pipe-normalization-count').textContent = info.normalizationCount;
+  document.getElementById('pipeline-model-name').textContent =
+    isModalsim ? 'Spline Logistic Replay' : 'Spline Logistic';
+  document.getElementById('pipeline-model-description').textContent = isModalsim
+    ? 'Leak-free spline baseline used for session probabilities; XGBoost leads the documented benchmark'
+    : 'B-spline basis → L2 logistic regression + run voting';
 
   document.getElementById('loading').style.opacity = '0';
   document.getElementById('loading').style.display = 'none';
@@ -950,7 +959,7 @@ function switchDataset(d) {
   document.getElementById('pipe-windows').textContent =
     isModalsim ? `${d.summary.total_windows} sessions` : `${d.summary.total_windows} windows`;
   document.getElementById('pipe-acc').textContent =
-    isModalsim ? `${d.summary.run_acc}% LOSO accuracy` : `${d.summary.run_acc}% run-level`;
+    isModalsim ? `${d.summary.run_acc}% replay accuracy` : `${d.summary.run_acc}% run-level`;
   document.getElementById('replay-subtitle').textContent = isModalsim
     ? `${d.best_subject.subject} — ${d.best_subject.run_acc}% subject accuracy · 3 workload tiers`
     : `${d.best_subject.subject} — ${d.best_subject.run_acc}% run accuracy · window-by-window predictions`;
